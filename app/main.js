@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron')
+const { app, BrowserWindow, dialog, Menu } = require('electron')
 const fs = require('fs')
 
 const windows = new Set()
@@ -12,7 +12,7 @@ app.on('ready', () => {
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform == 'darwin') {
+  if (process.platform === 'darwin') {
     return false
   }
   app.quit()
@@ -53,7 +53,16 @@ const createWindow = exports.createWindow = () => {
   });
 
   win.on('close', (event) => {
-    if (win.isDocumentEdited()) {
+    let isEdited
+
+    if (process.platform === 'darwin') {
+      isEdited = win.isDocumentEdited()
+    }
+    else {
+      isEdited = win.isEdited
+    }
+
+    if (isEdited) {
       event.preventDefault()
 
       const result = dialog.showMessageBox(win, {
@@ -138,6 +147,11 @@ const saveMarkdown = exports.saveMarkdown = (win, file, content) => {
   }
 
   fs.writeFileSync(file, content)
+}
+
+// win32
+const setDocumentEdited = exports.setDocumentEdited = (win, isEdited) => {
+  win.isEdited = isEdited
 }
 
 const startWatchingFile = (win, file) => {

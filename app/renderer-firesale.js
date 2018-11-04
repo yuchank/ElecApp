@@ -133,6 +133,10 @@ const updateUserInterface = (isEdited) => {
   }
   win.setTitle(title)
   win.setDocumentEdited(isEdited)
+
+  if (process.platform === 'win32')  {
+    mp.setDocumentEdited(win, isEdited)
+  }
   
   saveMarkdownButton.disabled = !isEdited
   revertButton.disabled = !isEdited
