@@ -1,13 +1,14 @@
 const { app, BrowserWindow, dialog, Menu } = require('electron')
+const menu = require('./application-menu')
 const fs = require('fs')
 
 const windows = new Set()
-
 const openFiles = new Map()
 
 const debug = /--debug/.test(process.argv[2])
 
 app.on('ready', () => {
+  Menu.setApplicationMenu(menu)
   createWindow()
 })
 

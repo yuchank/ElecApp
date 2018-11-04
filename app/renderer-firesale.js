@@ -1,4 +1,6 @@
 const { remote, ipcRenderer } = require('electron')
+const { Menu } = remote
+
 const path = require('path')
 
 const mp = remote.require('./main')
@@ -21,6 +23,32 @@ const openInDefaultButton = document.querySelector('#open-in-default');
 
 const getDraggedFile = (event) => event.dataTransfer.items[0]
 const getDroppedFile = (event) => event.dataTransfer.files[0]
+
+const markdownContextMenu = Menu.buildFromTemplate([
+  { 
+    label: 'Open File', 
+    click() { 
+      mp.getFileFromUser()
+    } 
+  },
+  { type: 'separator' },
+  { 
+    label: 'Cut', 
+    role: 'cut' 
+  },
+  { 
+    label: 'Copy', 
+    role: 'copy' 
+  },
+  { 
+    label: 'Paste', 
+    role: 'paste' 
+  },
+  { 
+    label: 'Select All', 
+    role: 'selectall' 
+  }
+])
 
 document.addEventListener('dragstart', event => event.preventDefault());
 document.addEventListener('dragover', event => event.preventDefault());
@@ -64,6 +92,11 @@ markdownView.addEventListener('drop', (event) => {
 
   markdownView.classList.remove('drag-over');
   markdownView.classList.remove('drag-error');
+})
+
+markdownView.addEventListener('contextmenu', (event) => {
+  event.preventDefault()
+  markdownContextMenu.popup(win)
 })
 
 newFileButton.addEventListener('click', () => {
@@ -121,6 +154,14 @@ ipcRenderer.on('file-changed', (event, file, content) => {
     cancelId: 1
   })
   renderFile(file, content)
+})
+
+ipcRenderer.on('save-markdown', () => {
+  mp.saveMarkdown(win, filePath, markdownView.value)
+})
+
+ipcRenderer.on('save-html', () => {
+  mp.saveHtml(win, filePath, markdownView.value)
 })
 
 const updateUserInterface = (isEdited) => {
