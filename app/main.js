@@ -1,5 +1,5 @@
 const { app, BrowserWindow, dialog, Menu } = require('electron')
-const menu = require('./application-menu')
+const createApplicationMenu = require('./application-menu')
 const fs = require('fs')
 
 const windows = new Set()
@@ -8,7 +8,7 @@ const openFiles = new Map()
 const debug = /--debug/.test(process.argv[2])
 
 app.on('ready', () => {
-  Menu.setApplicationMenu(menu)
+  createApplicationMenu()
   createWindow()
 })
 
@@ -53,6 +53,8 @@ const createWindow = exports.createWindow = () => {
     win.show()
   });
 
+  win.on('focus', createApplicationMenu)
+
   win.on('close', (event) => {
     let isEdited
 
@@ -86,6 +88,7 @@ const createWindow = exports.createWindow = () => {
 
   win.on('closed', () => {
     windows.delete(win)
+    createApplicationMenu()
     stopWatchingFile(win)
     win = null;
   })
@@ -114,6 +117,7 @@ const openFile = exports.openFile = (win, file) => {
   win.setRepresentedFilename(file)
   win.webContents.send('file-opened', file, content)
   startWatchingFile(win, file)
+  createApplicationMenu()
 }
 
 const saveHtml = exports.saveHtml = (win, content) => {

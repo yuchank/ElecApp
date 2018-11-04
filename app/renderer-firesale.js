@@ -1,4 +1,4 @@
-const { remote, ipcRenderer } = require('electron')
+const { remote, ipcRenderer, shell } = require('electron')
 const { Menu } = remote
 
 const path = require('path')
@@ -24,32 +24,6 @@ const openInDefaultButton = document.querySelector('#open-in-default');
 const getDraggedFile = (event) => event.dataTransfer.items[0]
 const getDroppedFile = (event) => event.dataTransfer.files[0]
 
-const markdownContextMenu = Menu.buildFromTemplate([
-  { 
-    label: 'Open File', 
-    click() { 
-      mp.getFileFromUser()
-    } 
-  },
-  { type: 'separator' },
-  { 
-    label: 'Cut', 
-    role: 'cut' 
-  },
-  { 
-    label: 'Copy', 
-    role: 'copy' 
-  },
-  { 
-    label: 'Paste', 
-    role: 'paste' 
-  },
-  { 
-    label: 'Select All', 
-    role: 'selectall' 
-  }
-])
-
 document.addEventListener('dragstart', event => event.preventDefault());
 document.addEventListener('dragover', event => event.preventDefault());
 document.addEventListener('dragleave', event => event.preventDefault());
@@ -57,6 +31,20 @@ document.addEventListener('drop', event => event.preventDefault());
 
 const renderMarkdownToHtml = (markdown) => {
   htmlView.innerHTML = marked(markdown, { sanitize: true })
+}
+
+const showFile = () => {
+  if (!filePath) {
+    return alert('This file has not been saved to the filesystem.')
+  }
+  shell.showItemInFolder(filePath)
+}
+
+const openInDefaultApplication = () => {
+  if (!filePath) {
+    return alert('This file has not been saved to the filesystem.')
+  }
+  shell.openItem(filePath)
 }
 
 markdownView.addEventListener('keyup', (event) => {
@@ -96,7 +84,7 @@ markdownView.addEventListener('drop', (event) => {
 
 markdownView.addEventListener('contextmenu', (event) => {
   event.preventDefault()
-  markdownContextMenu.popup(win)
+  createContextMenu().popup(win)
 })
 
 newFileButton.addEventListener('click', () => {
@@ -119,6 +107,9 @@ revertButton.addEventListener('click', () => {
   markdownView.value = originalContent
   renderMarkdownToHtml(originalContent)
 })
+
+showFileButton.addEventListener('click', showFile)
+openInDefaultButton.addEventListener('click', openInDefaultApplication)
 
 ipcRenderer.on('file-opened', (event, file, content) => {
   if (win.isDocumentEdited()) {
@@ -164,6 +155,9 @@ ipcRenderer.on('save-html', () => {
   mp.saveHtml(win, filePath, markdownView.value)
 })
 
+ipcRenderer.on('show-file', showFile)
+ipcRenderer.on('open-in-default', openInDefaultApplication)
+
 const updateUserInterface = (isEdited) => {
   let title = 'Fire Sale'
   if (filePath) {
@@ -193,6 +187,47 @@ const renderFile = (file, content) => {
   
   markdownView.value = content
   renderMarkdownToHtml(content)
+
+  showFileButton.disabled = false
+  openInDefaultButton.disabled = false
   
   updateUserInterface(false)
+}
+
+const createContextMenu = () => {
+  return Menu.buildFromTemplate([
+    { 
+      label: 'Open File', 
+      click() { 
+        mp.getFileFromUser()
+      } 
+    },
+    {
+      label: 'Show File in Folder',
+      click: showFile,
+      enabled: !!filePath
+    },
+    {
+      label: 'Open in Default Editor',
+      click: openInDefaultApplication,
+      enabled: !!filePath
+    },
+    { type: 'separator' },
+    { 
+      label: 'Cut', 
+      role: 'cut' 
+    },
+    { 
+      label: 'Copy', 
+      role: 'copy' 
+    },
+    { 
+      label: 'Paste', 
+      role: 'paste' 
+    },
+    { 
+      label: 'Select All', 
+      role: 'selectall' 
+    }
+  ])
 }
