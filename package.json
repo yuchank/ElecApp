@@ -2,9 +2,14 @@
   "name": "elecapp",
   "version": "0.0.1",
   "description": "",
+  "productName": "Elec App",
   "main": "./app/main.js",
   "scripts": {
     "start": "electron .",
+    "build": "npm run build-mac && npm run build-win && npm run build-linux",
+    "build-mac": "electron-packager . --platform=darwin --out=build --icon=icons/Icon.icns  --asar --overwrite",
+    "build-win": "electron-packager . --platform=win32 --out=build --icon=icons/Icon.icns  --asar --overwrite",
+    "build-linux": "electron-packager . --platform=linux --out=build --icon=icons/Icon.png  --asar --overwrite",
     "dev": "electron . --debug",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,5 +26,8 @@
   "dependencies": {
     "electron": "^3.0.7",
     "marked": "^0.5.1"
+  },
+  "devDependencies": {
+    "electron-packager": "^12.2.0"
   }
 }
